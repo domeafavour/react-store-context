@@ -1,88 +1,212 @@
-# React Hook Package Template
+# React Store Context
 
-- Build with [tsup](https://tsup.egoist.dev/)
-- Publish to npm with github actions
+A simple and lightweight store context for React built on top of [Zustand](https://github.com/pmndrs/zustand).
 
-## Prepare
+## Installation
 
-Update package.json with your package `name`, `description`, `keywords`, `author`, `repository`, etc.
-
-For example:
-
-- package name: `react-use-my-hook`
-- description: `A react hook package`
-- keywords: `["react", "hook", "your-keyword"]`
-- author: `John`
-- repository: `https://github.com/john/react-use-my-hook.git`
-
-```diff
-  {
---  "name": "package-name",
-++  "name": "react-use-my-hook",
-    "version": "0.0.1",
---  "description": "<description>",
-++  "description": "A react hook package",
-    "main": ".dist/index.js",
-    "types": ".dist/index.d.ts",
-    "files": [
-      ".dist"
-    ],
-    "keywords": [
-      "react",
---    "hook"
-++    "hook",
-++    "your-keyword"
-    ],
---  "author": "<author name>",
-++  "author": "John",
-    "license": "MIT",
-    "peerDependencies": {
-      "react": ">=16.8.0",
-      "react-dom": ">=16.8.0"
-    },
-    "devDependencies": {
-      "@testing-library/dom": "^10.4.0",
-      "@testing-library/jest-dom": "^6.6.3",
-      "@testing-library/react": "^16.1.0",
-      "@types/react": ">=16.8.0",
-      "@types/react-dom": ">=16.8.0",
-      "happy-dom": "^16.5.3",
-      "react": ">=16.8.0",
-      "react-dom": ">=16.8.0",
-      "tsup": "^8.0.2",
-      "typescript": "^5.4.5",
-      "typescript": "^5.4.5",
-      "vitest": "^2.1.8"
-    },
-    "repository": {
-      "type": "git",
---    "url": "<your repo url>"
-++    "url": "https://github.com/john/react-use-my-hook.git"
-    },
-    "scripts": {
-      "test": "vitest",
-      "build": "tsup"
-    }
-  }
-
-```
-
-## Build
+### npm
 
 ```bash
-pnpm build
+npm install @domeadev/react-store-context
 ```
 
-## Test
+### yarn
 
 ```bash
-pnpm test
+yarn add @domeadev/react-store-context
 ```
 
-## Publish
+### pnpm
 
-Add a [github secret](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions) `NPM_PUBLISH_TOKEN` with your [npm access token](https://docs.npmjs.com/about-access-tokens).
+```bash
+pnpm add @domeadev/react-store-context
+```
 
-![secrets and variables](media/image.png)
+## Features
 
-Draft a new release on github, then the github actions will publish the package to npm.
+- 🪶 Lightweight wrapper around Zustand
+- 🧩 Context-based state sharing
+- 🔄 Component subscription with minimal re-renders
+- 🎯 Type-safe selectors
+- 🌳 Tree-shakeable exports
+
+## Usage
+
+### Basic Example
+
+```tsx
+import {
+  createDefaultStore,
+  createStoreContext,
+} from "@domeadev/react-store-context";
+import React from "react";
+
+// Define todo type
+interface Todo {
+  id: string;
+  text: string;
+  completed: boolean;
+}
+
+// Create a store creator function
+const createTodosStore = () =>
+  createDefaultStore(
+    // initial state
+    { todos: [] as Todo[] },
+    (set) => ({
+      addTodo: (text: string) =>
+        set((state) => ({
+          todos: [
+            ...state.todos,
+            { id: Math.random().toString(36).slice(2, 9), text, completed: false },
+          ],
+        })),
+      toggleTodo: (id: string) =>
+        set((state) => ({
+          todos: state.todos.map((todo) =>
+            todo.id === id ? { ...todo, completed: !todo.completed } : todo
+          ),
+        })),
+      removeTodo: (id: string) =>
+        set((state) => ({
+          todos: state.todos.filter((todo) => todo.id !== id),
+        })),
+    })
+  );
+
+// Create the store context
+const { StoreProvider, useStore, Subscribe, createStoreSelector } =
+  createStoreContext(createTodosStore);
+
+// Use selectors for type safety
+const selectTodos = createStoreSelector((state) => state.todos);
+const selectActions = createStoreSelector((state) => ({
+  addTodo: state.addTodo,
+  toggleTodo: state.toggleTodo,
+  removeTodo: state.removeTodo,
+}));
+
+// TodoList component
+const TodoList = () => {
+  const todos = useStore(selectTodos);
+  const { toggleTodo, removeTodo } = useStore(selectActions);
+
+  return (
+    <ul>
+      {todos.map((todo) => (
+        <li key={todo.id} style={{ textDecoration: todo.completed ? "line-through" : "none" }}>
+          <input
+            type="checkbox"
+            checked={todo.completed}
+            onChange={() => toggleTodo(todo.id)}
+          />
+          {todo.text}
+          <button onClick={() => removeTodo(todo.id)}>Delete</button>
+        </li>
+      ))}
+    </ul>
+  );
+};
+
+// App component
+const App = () => {
+  return (
+    <StoreProvider>
+      <TodoList />
+      {/* Other components that need access to the todos state */}
+    </StoreProvider>
+  );
+};
+```
+
+### Using the Subscribe Component
+
+You can use the `Subscribe` component for declarative subscriptions:
+
+```tsx
+const TodoCounter = () => {
+  return (
+    <Subscribe selector={selectTodos}>
+      {(todos) => (
+        <div>
+          Total: {todos.length} | Completed: {todos.filter(todo => todo.completed).length}
+        </div>
+      )}
+    </Subscribe>
+  );
+};
+```
+
+### Passing Initial Props
+
+You can pass initial props to your store:
+
+```tsx
+interface TodoStoreProps {
+  initialTodos?: Todo[];
+}
+
+const { StoreProvider } = createStoreContext((props?: TodoStoreProps) =>
+  createDefaultStore(
+    { todos: props?.initialTodos || [] },
+    (set) => ({
+      addTodo: (text: string) =>
+        set((state) => ({
+          todos: [
+            ...state.todos,
+            { id: Math.random().toString(36).slice(2, 9), text, completed: false },
+          ],
+        })),
+      toggleTodo: (id: string) =>
+        set((state) => ({
+          todos: state.todos.map((todo) =>
+            todo.id === id ? { ...todo, completed: !todo.completed } : todo
+          ),
+        })),
+      removeTodo: (id: string) =>
+        set((state) => ({
+          todos: state.todos.filter((todo) => todo.id !== id),
+        })),
+    })
+  )
+);
+
+// Usage
+<StoreProvider initialTodos={[
+  { id: '1', text: 'Learn React', completed: true },
+  { id: '2', text: 'Learn TypeScript', completed: false },
+]}>
+  <TodoList />
+</StoreProvider>;
+```
+
+## API Reference
+
+### `createStoreContext(storeCreator)`
+
+Creates a React context for your store.
+
+**Parameters:**
+
+- `storeCreator`: A function that creates a store instance
+
+**Returns:**
+
+- `StoreContext`: The React context object
+- `StoreProvider`: A provider component for the store
+- `useStore`: A hook to access the store state
+- `createStoreSelector`: A utility to create typed selectors
+- `Subscribe`: A component for declarative subscriptions
+
+### `createDefaultStore(initialState, actionsCreator)`
+
+Creates a default store with initial state and actions.
+
+**Parameters:**
+
+- `initialState`: The initial state object
+- `actionsCreator`: A function that returns actions using Zustand's `set` function
+
+## License
+
+MIT © [domeafavour](https://github.com/domeafavour)
