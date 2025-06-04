@@ -8,5 +8,5 @@ export default defineConfig({
   clean: true,
   dts: true,
   format: ["cjs", "esm"],
-  noExternal: ["zustand"],
+  noExternal: ["zustand", "entity-state-adapter"],
 });

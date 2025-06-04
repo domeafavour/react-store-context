@@ -41,6 +41,7 @@
     "vitest": "^2.1.8"
   },
   "dependencies": {
+    "entity-state-adapter": "0.1.4",
     "zustand": "^4.5.7"
   },
   "repository": {
@@ -53,5 +54,10 @@
   "scripts": {
     "test": "vitest",
     "build": "tsup"
+  },
+  "pnpm": {
+    "patchedDependencies": {
+      "entity-state-adapter@0.1.4": "patches/entity-state-adapter@0.1.4.patch"
+    }
   }
 }

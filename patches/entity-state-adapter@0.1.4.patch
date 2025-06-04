@@ -1,0 +1,13 @@
+diff --git a/package.json b/package.json
+index 49f8208306e075dcb0183bfd1eb0676bb6c89899..65cf024020df982793bb9651497d1b8de9a66d42 100644
+--- a/package.json
++++ b/package.json
+@@ -4,7 +4,7 @@
+     "description": "reactjs implementation of entity state adapter",
+     "main": "dist/index.js",
+     "module": "dist/index.es.js",
+-    "typings": "types/index.d.ts",
++    "typings": "types/src/index.d.ts",
+     "repository": "git@github.com:thonymg/entity-state-adapter.git",
+     "author": "Anthony Michel (@thonymg - copycates@gmail.com)",
+     "license": "MIT",
