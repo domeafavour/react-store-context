@@ -4,21 +4,31 @@ import {
   ReactNode,
   useContext,
   useMemo,
+  useState,
 } from "react";
 import { type StoreApi, useStore as $useStore } from "./exports";
-import { AnyObject } from "./typings";
+import { AnyObject, WithOptionalStore } from "./typings";
 
 export function createStoreContext<S, P extends AnyObject = AnyObject>(
   storeCreator: (props?: P) => StoreApi<S>
 ) {
   const StoreContext = createContext<StoreApi<S> | null>(null);
 
-  function StoreProvider(props: PropsWithChildren<P>) {
+  function StoreProvider(props: PropsWithChildren<WithOptionalStore<P, S>>) {
     return (
-      <StoreContext.Provider value={useMemo(() => storeCreator(props), [])}>
+      <StoreContext.Provider
+        value={useMemo(() => props.store ?? storeCreator(props), [props.store])}
+      >
         {props.children}
       </StoreContext.Provider>
     );
+  }
+
+  function useCreateStore(props?: P | (() => P)) {
+    const [store] = useState(() =>
+      storeCreator(typeof props === "function" ? props() : props)
+    );
+    return store;
   }
 
   function useStoreContext() {
@@ -56,6 +66,7 @@ export function createStoreContext<S, P extends AnyObject = AnyObject>(
   return {
     StoreContext,
     StoreProvider,
+    useCreateStore,
     useStore,
     createStoreSelector,
     Subscribe,

@@ -146,4 +146,41 @@ describe("createStoreContext", () => {
 
     expect(screen.getByTestId("count").textContent).toBe("0");
   });
+
+  it("should pass initial state to the provider", () => {
+    const { StoreProvider, Subscribe } = createStoreContext(createTestStore);
+
+    const { getByTestId } = render(
+      <StoreProvider initial={10}>
+        <Subscribe selector={(state) => state.count}>
+          {(count) => <span data-testid="count">{count}</span>}
+        </Subscribe>
+      </StoreProvider>
+    );
+
+    expect(getByTestId("count").textContent).toBe("10");
+  });
+
+  it("should create and maintain a store instance with useCreateStore", () => {
+    const { useCreateStore, StoreProvider, useStore } =
+      createStoreContext(createTestStore);
+
+    const TestComponent = () => {
+      const store = useCreateStore({ initial: 5 });
+      const count = useStore((state) => state.count, store);
+      return (
+        <StoreProvider
+          // prefer to use the state from the store created by useCreateStore
+          store={store}
+          initial={0}
+        >
+          <span data-testid="count">{count}</span>
+        </StoreProvider>
+      );
+    };
+
+    const { getByTestId } = render(<TestComponent />);
+
+    expect(getByTestId("count").textContent).toBe("5");
+  });
 });
