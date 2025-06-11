@@ -1,6 +1,6 @@
 {
   "name": "@domeadev/react-store-context",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "A simple and lightweight store context for React.",
   "types": ".dist/index.d.ts",
   "main": ".dist/index.js",
